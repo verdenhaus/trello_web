@@ -1,118 +1,88 @@
 {
-  "boards": [
+  "users": [
     {
-      "id": 1744048639978,
-      "title": "hyh",
-      "columns": [
-        {
-          "id": 1744052856651,
-          "title": "ук",
-          "tasks": [
-            {
-              "id": 1744105049579,
-              "title": "uyt",
-              "completed": false
-            },
-            {
-              "id": 1744105052843,
-              "title": "jkhuty",
-              "completed": true
-            },
-            {
-              "id": 1744652234688,
-              "title": "aushd",
-              "completed": false
-            }
-          ]
-        },
-        {
-          "id": 1744052858970,
-          "title": "укп",
-          "tasks": [
-            {
-              "id": 1744053609090,
-              "title": "fyvh",
-              "completed": true
-            }
-          ]
-        },
-        {
-          "id": 1744052861111,
-          "title": "укп",
-          "tasks": [
-            {
-              "id": 1744094076989,
-              "title": "jgfhdgf",
-              "completed": false
-            },
-            {
-              "id": 1744089616966,
-              "title": "fuy",
-              "completed": false
-            },
-            {
-              "id": 1744105056595,
-              "title": "jkhujgvubh",
-              "completed": false
-            }
-          ]
-        },
-        {
-          "id": 1744089647076,
-          "title": "trg",
-          "tasks": [
-            {
-              "id": 1744105062780,
-              "title": "mjh",
-              "completed": false
-            }
-          ]
-        }
-      ]
+      "email": "dilnaz@mail.ru",
+      "password": "$2a$10$.bePGxjAimMVe8Q6yL6aDOrx9GSNzP5uIGokEgH9ELLnE/qCXBVZ6",
+      "id": 3
     },
     {
-      "id": 1744048644715,
-      "title": "456",
+      "email": "asyl@mail.ru",
+      "password": "$2a$10$3TLaRqXLwsEilLCnHDXGUuRec/FuzI2rQa08AgAF0XeN/82pf04LC",
+      "id": 4
+    }
+  ],
+  "boards": [
+    {
+      "id": 1744660880098,
+      "title": "dil 1",
+      "columns": [],
+      "userId": 3
+    },
+    {
+      "id": 1744660906465,
+      "title": "asyl ",
       "columns": [
         {
-          "id": 1744093919417,
-          "title": "rdfgfh",
+          "id": 1744662752721,
+          "title": "122",
+          "tasks": [
+            {
+              "id": 1744664610230,
+              "title": "edas",
+              "completed": false
+            }
+          ]
+        },
+        {
+          "id": 1744662756258,
+          "title": "frd",
           "tasks": []
         },
         {
-          "id": 1744093923857,
-          "title": "hd",
-          "tasks": [
-            {
-              "id": 1744093929171,
-              "title": "fsd",
-              "completed": false
-            }
-          ]
+          "id": 1744662758667,
+          "title": "efsd",
+          "tasks": []
+        },
+        {
+          "id": 1744662760976,
+          "title": "w",
+          "tasks": []
+        },
+        {
+          "id": 1744662763242,
+          "title": "ew",
+          "tasks": []
+        },
+        {
+          "id": 1744662767071,
+          "title": "we",
+          "tasks": []
         }
-      ]
+      ],
+      "userId": 4
     },
     {
-      "id": 1744048651029,
-      "title": "123",
-      "columns": []
-    },
-    {
-      "id": 1744652277216,
-      "title": "56yuj",
+      "id": 1744663306207,
+      "title": "789",
       "columns": [
         {
-          "id": 1744652280194,
-          "title": "tdjhg",
+          "id": 1744663321340,
+          "title": "wrety",
           "tasks": [
             {
-              "id": 1744652282025,
-              "title": "dtyjh",
-              "completed": false
+              "id": 1744663338522,
+              "title": "klhjh",
+              "completed": true
             }
           ]
+        },
+        {
+          "id": 1744663323670,
+          "title": "ewfs",
+          "tasks": []
         }
-      ]
+      ],
+      "userId": 3
     }
   ]
 }

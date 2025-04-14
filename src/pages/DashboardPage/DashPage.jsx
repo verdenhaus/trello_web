@@ -5,16 +5,18 @@ import { fetchBoards, addBoard, deleteBoard } from '../../store/boardsSlice';
 
 const DashboardPage = () => {
   const dispatch = useDispatch();
-  const { boards, status } = useSelector(state => state.boards);
+  const { boards, status, user } = useSelector(state => state.boards);
   const [boardTitle, setBoardTitle] = useState('');
   const [showForm, setShowForm] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (status === 'idle') {
+    if (user) {
       dispatch(fetchBoards());
+    } else {
+      navigate('/login');
     }
-  }, [status, dispatch]);
+  }, [user, dispatch, navigate]);
 
   const handleCreateBoard = () => {
     if (boardTitle.trim() === '') return;
@@ -22,6 +24,10 @@ const DashboardPage = () => {
     setBoardTitle('');
     setShowForm(false);
   };
+
+  if (status === 'loading') {
+    return <div>Загрузка...</div>;
+  }
 
   return (
     <div className="dashboard">
