@@ -1,37 +1,43 @@
-import React, { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
-import { BoardsContext } from "../../context/BoardsProvider";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchBoards, addBoard, deleteBoard } from '../../store/boardsSlice';
 
 const DashboardPage = () => {
-  const { boards, addBoard, deleteBoard } = useContext(BoardsContext);
-  const [boardTitle, setBoardTitle] = useState("");
+  const dispatch = useDispatch();
+  const { boards, status } = useSelector(state => state.boards);
+  const [boardTitle, setBoardTitle] = useState('');
   const [showForm, setShowForm] = useState(false);
   const navigate = useNavigate();
 
-  
+  useEffect(() => {
+    if (status === 'idle') {
+      dispatch(fetchBoards());
+    }
+  }, [status, dispatch]);
 
   const handleCreateBoard = () => {
-    if (boardTitle.trim() === "") return;
-    addBoard(boardTitle);
-    setBoardTitle("");
-    setShowForm(false); 
+    if (boardTitle.trim() === '') return;
+    dispatch(addBoard(boardTitle));
+    setBoardTitle('');
+    setShowForm(false);
   };
 
   return (
     <div className="dashboard">
       <h1>Мои доски</h1>
       <div className="board-list">
-        {boards.map((board) => (
+        {boards.map(board => (
           <div key={board.id} className="board-card">
             <h3 onClick={() => navigate(`/board/${board.id}`)}>{board.title}</h3>
-            <button onClick={() => deleteBoard(board.id, navigate)}>Удалить</button>
+            <button onClick={() => dispatch(deleteBoard(board.id))}>Удалить</button>
           </div>
         ))}
       </div>
 
       {!showForm ? (
         <div className="new-board">
-        <button className= ''onClick={() => setShowForm(true)}>Создать доску</button>
+          <button onClick={() => setShowForm(true)}>Создать доску</button>
         </div>
       ) : (
         <div className="new-board">
@@ -39,10 +45,10 @@ const DashboardPage = () => {
             type="text"
             placeholder="Название доски"
             value={boardTitle}
-            onChange={(e) => setBoardTitle(e.target.value)}
+            onChange={e => setBoardTitle(e.target.value)}
           />
           <div className="buttons">
-          <button onClick={() => setShowForm(false)}>Отмена</button>
+            <button onClick={() => setShowForm(false)}>Отмена</button>
             <button onClick={handleCreateBoard}>Создать</button>
           </div>
         </div>
