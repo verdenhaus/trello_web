@@ -1,67 +1,122 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-export const fetchBoards = createAsyncThunk('boards/fetchBoards', async () => {
-  const res = await fetch('http://localhost:8080/boards');
+export const fetchBoards = createAsyncThunk('boards/fetchBoards', async (_, { getState }) => {
+  const { user } = getState().boards;
+  if (!user) throw new Error('User not authenticated');
+  
+  const res = await fetch(`http://localhost:8080/boards?userId=${user.id}`, {
+    headers: {
+      'Authorization': `Bearer ${user.accessToken}`
+    }
+  });
+  
+  if (!res.ok) throw new Error('Failed to fetch boards');
   return res.json();
 });
 
-export const addBoard = createAsyncThunk('boards/addBoard', async (title) => {
-  const newBoard = { id: Date.now(), title, columns: [] };
-  await fetch('http://localhost:8080/boards', {
+export const addBoard = createAsyncThunk('boards/addBoard', async (title, { getState }) => {
+  const { user } = getState().boards;
+  const newBoard = { 
+    id: Date.now(), 
+    title, 
+    columns: [], 
+    userId: user.id 
+  };
+  
+  const res = await fetch('http://localhost:8080/boards', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${user.accessToken}`
+    },
     body: JSON.stringify(newBoard),
   });
+  
+  if (!res.ok) throw new Error('Failed to create board');
   return newBoard;
 });
-
-export const deleteBoard = createAsyncThunk('boards/deleteBoard', async (id) => {
-  await fetch(`http://localhost:8080/boards/${id}`, { method: 'DELETE' });
+export const deleteBoard = createAsyncThunk('boards/deleteBoard', async (id, { getState }) => {
+  const { user } = getState().boards;
+  await fetch(`http://localhost:8080/boards/${id}`, { 
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${user.accessToken}`
+    }
+  });
   return id;
 });
 
-export const addColumn = createAsyncThunk('boards/addColumn', async ({ boardId, columnTitle }) => {
-  const res = await fetch(`http://localhost:8080/boards/${boardId}`);
+export const addColumn = createAsyncThunk('boards/addColumn', async ({ boardId, columnTitle }, { getState }) => {
+  const { user } = getState().boards;
+  const res = await fetch(`http://localhost:8080/boards/${boardId}`, {
+    headers: {
+      'Authorization': `Bearer ${user.accessToken}`
+    }
+  });
   const board = await res.json();
   if (board.columns.length >= 6) throw new Error('Max columns reached');
   const newColumn = { id: Date.now(), title: columnTitle, tasks: [] };
   const updatedBoard = { ...board, columns: [...board.columns, newColumn] };
   await fetch(`http://localhost:8080/boards/${boardId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${user.accessToken}`
+    },
     body: JSON.stringify(updatedBoard),
   });
   return { boardId, newColumn };
 });
 
-export const editColumn = createAsyncThunk('boards/editColumn', async ({ boardId, columnId, newTitle }) => {
-  const res = await fetch(`http://localhost:8080/boards/${boardId}`);
+export const editColumn = createAsyncThunk('boards/editColumn', async ({ boardId, columnId, newTitle }, { getState }) => {
+  const { user } = getState().boards;
+  const res = await fetch(`http://localhost:8080/boards/${boardId}`, {
+    headers: {
+      'Authorization': `Bearer ${user.accessToken}`
+    }
+  });
   const board = await res.json();
   const updatedColumns = board.columns.map(col => (col.id === columnId ? { ...col, title: newTitle } : col));
   const updatedBoard = { ...board, columns: updatedColumns };
   await fetch(`http://localhost:8080/boards/${boardId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${user.accessToken}`
+    },
     body: JSON.stringify(updatedBoard),
   });
   return { boardId, columnId, newTitle };
 });
 
-export const deleteColumn = createAsyncThunk('boards/deleteColumn', async ({ boardId, columnId }) => {
-  const res = await fetch(`http://localhost:8080/boards/${boardId}`);
+export const deleteColumn = createAsyncThunk('boards/deleteColumn', async ({ boardId, columnId }, { getState }) => {
+  const { user } = getState().boards;
+  const res = await fetch(`http://localhost:8080/boards/${boardId}`, {
+    headers: {
+      'Authorization': `Bearer ${user.accessToken}`
+    }
+  });
   const board = await res.json();
   const updatedColumns = board.columns.filter(col => col.id !== columnId);
   const updatedBoard = { ...board, columns: updatedColumns };
   await fetch(`http://localhost:8080/boards/${boardId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${user.accessToken}`
+    },
     body: JSON.stringify(updatedBoard),
   });
   return { boardId, columnId };
 });
 
-export const addTask = createAsyncThunk('boards/addTask', async ({ boardId, columnId, taskTitle }) => {
-  const res = await fetch(`http://localhost:8080/boards/${boardId}`);
+export const addTask = createAsyncThunk('boards/addTask', async ({ boardId, columnId, taskTitle }, { getState }) => {
+  const { user } = getState().boards;
+  const res = await fetch(`http://localhost:8080/boards/${boardId}`, {
+    headers: {
+      'Authorization': `Bearer ${user.accessToken}`
+    }
+  });
   const board = await res.json();
   const updatedColumns = board.columns.map(col =>
     col.id === columnId
@@ -71,14 +126,22 @@ export const addTask = createAsyncThunk('boards/addTask', async ({ boardId, colu
   const updatedBoard = { ...board, columns: updatedColumns };
   await fetch(`http://localhost:8080/boards/${boardId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${user.accessToken}`
+    },
     body: JSON.stringify(updatedBoard),
   });
   return { boardId, columnId, task: { id: Date.now(), title: taskTitle, completed: false } };
 });
 
-export const editTask = createAsyncThunk('boards/editTask', async ({ boardId, columnId, taskId, newTitle }) => {
-  const res = await fetch(`http://localhost:8080/boards/${boardId}`);
+export const editTask = createAsyncThunk('boards/editTask', async ({ boardId, columnId, taskId, newTitle }, { getState }) => {
+  const { user } = getState().boards;
+  const res = await fetch(`http://localhost:8080/boards/${boardId}`, {
+    headers: {
+      'Authorization': `Bearer ${user.accessToken}`
+    }
+  });
   const board = await res.json();
   const updatedColumns = board.columns.map(col =>
     col.id === columnId
@@ -88,14 +151,22 @@ export const editTask = createAsyncThunk('boards/editTask', async ({ boardId, co
   const updatedBoard = { ...board, columns: updatedColumns };
   await fetch(`http://localhost:8080/boards/${boardId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${user.accessToken}`
+    },
     body: JSON.stringify(updatedBoard),
   });
   return { boardId, columnId, taskId, newTitle };
 });
 
-export const deleteTask = createAsyncThunk('boards/deleteTask', async ({ boardId, columnId, taskId }) => {
-  const res = await fetch(`http://localhost:8080/boards/${boardId}`);
+export const deleteTask = createAsyncThunk('boards/deleteTask', async ({ boardId, columnId, taskId }, { getState }) => {
+  const { user } = getState().boards;
+  const res = await fetch(`http://localhost:8080/boards/${boardId}`, {
+    headers: {
+      'Authorization': `Bearer ${user.accessToken}`
+    }
+  });
   const board = await res.json();
   const updatedColumns = board.columns.map(col =>
     col.id === columnId ? { ...col, tasks: col.tasks.filter(task => task.id !== taskId) } : col
@@ -103,14 +174,22 @@ export const deleteTask = createAsyncThunk('boards/deleteTask', async ({ boardId
   const updatedBoard = { ...board, columns: updatedColumns };
   await fetch(`http://localhost:8080/boards/${boardId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${user.accessToken}`
+    },
     body: JSON.stringify(updatedBoard),
   });
   return { boardId, columnId, taskId };
 });
 
-export const moveTask = createAsyncThunk('boards/moveTask', async ({ boardId, taskId, sourceColumnId, newColumnId }) => {
-  const res = await fetch(`http://localhost:8080/boards/${boardId}`);
+export const moveTask = createAsyncThunk('boards/moveTask', async ({ boardId, taskId, sourceColumnId, newColumnId }, { getState }) => {
+  const { user } = getState().boards;
+  const res = await fetch(`http://localhost:8080/boards/${boardId}`, {
+    headers: {
+      'Authorization': `Bearer ${user.accessToken}`
+    }
+  });
   const board = await res.json();
   const sourceColumn = board.columns.find(col => col.id === sourceColumnId);
   const task = sourceColumn.tasks.find(t => t.id === taskId);
@@ -122,26 +201,42 @@ export const moveTask = createAsyncThunk('boards/moveTask', async ({ boardId, ta
   const updatedBoard = { ...board, columns: updatedColumns };
   await fetch(`http://localhost:8080/boards/${boardId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${user.accessToken}`
+    },
     body: JSON.stringify(updatedBoard),
   });
   return { boardId, taskId, sourceColumnId, newColumnId };
 });
 
-export const editBoardTitle = createAsyncThunk('boards/editBoardTitle', async ({ boardId, newTitle }) => {
-  const res = await fetch(`http://localhost:8080/boards/${boardId}`);
+export const editBoardTitle = createAsyncThunk('boards/editBoardTitle', async ({ boardId, newTitle }, { getState }) => {
+  const { user } = getState().boards;
+  const res = await fetch(`http://localhost:8080/boards/${boardId}`, {
+    headers: {
+      'Authorization': `Bearer ${user.accessToken}`
+    }
+  });
   const board = await res.json();
   const updatedBoard = { ...board, title: newTitle };
   await fetch(`http://localhost:8080/boards/${boardId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${user.accessToken}`
+    },
     body: JSON.stringify(updatedBoard),
   });
   return { boardId, newTitle };
 });
 
-export const toggleTaskCompletion = createAsyncThunk('boards/toggleTaskCompletion', async ({ boardId, columnId, taskId }) => {
-  const res = await fetch(`http://localhost:8080/boards/${boardId}`);
+export const toggleTaskCompletion = createAsyncThunk('boards/toggleTaskCompletion', async ({ boardId, columnId, taskId }, { getState }) => {
+  const { user } = getState().boards;
+  const res = await fetch(`http://localhost:8080/boards/${boardId}`, {
+    headers: {
+      'Authorization': `Bearer ${user.accessToken}`
+    }
+  });
   const board = await res.json();
   const updatedColumns = board.columns.map(col =>
     col.id === columnId
@@ -154,7 +249,10 @@ export const toggleTaskCompletion = createAsyncThunk('boards/toggleTaskCompletio
   const updatedBoard = { ...board, columns: updatedColumns };
   await fetch(`http://localhost:8080/boards/${boardId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${user.accessToken}`
+    },
     body: JSON.stringify(updatedBoard),
   });
   return { boardId, columnId, taskId };
@@ -167,6 +265,7 @@ const boardsSlice = createSlice({
     theme: localStorage.getItem('theme') || 'light',
     status: 'idle',
     error: null,
+    user: JSON.parse(localStorage.getItem('user')) || null,
   },
   reducers: {
     toggleTheme: state => {
@@ -174,6 +273,12 @@ const boardsSlice = createSlice({
       localStorage.setItem('theme', state.theme);
       document.body.setAttribute('data-theme', state.theme);
     },
+    setUser: (state, action) => {
+      state.user = action.payload;
+    },
+    clearBoards: (state) => {
+      state.boards = [];
+    }
   },
   extraReducers: builder => {
     builder
@@ -273,5 +378,5 @@ const boardsSlice = createSlice({
   },
 });
 
-export const { toggleTheme } = boardsSlice.actions;
+export const { toggleTheme, setUser, clearBoards } = boardsSlice.actions;
 export default boardsSlice.reducer;
