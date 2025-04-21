@@ -20,9 +20,11 @@ const DashboardPage = () => {
 
   const handleCreateBoard = () => {
     if (boardTitle.trim() === '') return;
-    dispatch(addBoard(boardTitle));
-    setBoardTitle('');
-    setShowForm(false);
+    dispatch(addBoard(boardTitle)).then(({ payload }) => {
+      setBoardTitle('');
+      setShowForm(false);
+      navigate(`/board/${payload.id}`); // Navigate to new board
+    });
   };
 
   if (status === 'loading') {

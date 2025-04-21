@@ -1,21 +1,31 @@
 import React, { useState } from 'react';
-import { useDrop } from 'react-dnd';
+import { useDrag, useDrop } from 'react-dnd';
 import Task from './Task';
 import { useDispatch } from 'react-redux';
 import { addTask, editColumn, deleteColumn } from '../store/boardsSlice';
 import { MdDeleteOutline } from 'react-icons/md';
 
-const Column = ({ column, boardId, moveTask }) => {
+const Column = ({ column, boardId, moveTask, index, onDropColumn }) => {
   const dispatch = useDispatch();
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [newTitle, setNewTitle] = useState(column.title);
 
+  const [{ isDragging }, drag] = useDrag({
+    type: 'COLUMN',
+    item: { id: column.id, index, boardId, type: 'COLUMN' },
+    collect: monitor => ({
+      isDragging: !!monitor.isDragging(),
+    }),
+  });
+
   const [, drop] = useDrop({
-    accept: 'TASK',
+    accept: ['TASK', 'COLUMN'],
     drop: item => {
-      if (item.columnId !== column.id) {
+      if (item.type === 'TASK' && item.columnId !== column.id) {
         dispatch(moveTask({ boardId, taskId: item.id, sourceColumnId: item.columnId, newColumnId: column.id }));
+      } else if (item.type === 'COLUMN' && item.id !== column.id) {
+        onDropColumn(item.index, index);
       }
     },
   });
@@ -34,7 +44,7 @@ const Column = ({ column, boardId, moveTask }) => {
   };
 
   return (
-    <div ref={drop} className="column">
+    <div ref={node => drag(drop(node))} className={`column ${isDragging ? 'column--dragging' : ''}`}>
       <div className="column-header">
         {isEditing ? (
           <input
@@ -64,9 +74,15 @@ const Column = ({ column, boardId, moveTask }) => {
         <button onClick={handleAddTask}>+</button>
       </div>
       <div className="tasks-container">
-        {column.tasks.map(task => (
-          <Task key={task.id} task={task} columnId={column.id} boardId={boardId} />
-        ))}
+        {Array.isArray(column.tasks) && column.tasks.length > 0 ? (
+          column.tasks
+            .filter(task => task && task.id)
+            .map(task => (
+              <Task key={task.id} task={task} columnId={column.id} boardId={boardId} />
+            ))
+        ) : (
+          <p>Нет задач</p>
+        )}
       </div>
     </div>
   );

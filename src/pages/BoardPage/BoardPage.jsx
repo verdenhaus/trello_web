@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { addColumn, moveTask, editBoardTitle } from '../../store/boardsSlice';
+import { addColumn, moveTask, editBoardTitle, fetchBoards, reorderColumn } from '../../store/boardsSlice';
 import Column from '../../components/Column';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -9,14 +9,38 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 const BoardPage = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const boards = useSelector(state => state.boards.boards);
+  const navigate = useNavigate();
+  const { boards, status } = useSelector(state => state.boards);
   const [newColumnTitle, setNewColumnTitle] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [newTitle, setNewTitle] = useState('');
 
   const board = boards.find(b => b.id === Number(id));
 
-  if (!board) return <p>Загрузка...</p>;
+  useEffect(() => {
+    if (!board && status !== 'loading') {
+      dispatch(fetchBoards()).then(({ payload }) => {
+        const updatedBoard = payload.find(b => b.id === Number(id));
+        if (!updatedBoard) {
+          navigate('/');
+        } else {
+          setNewTitle(updatedBoard.title);
+        }
+      });
+    } else if (board) {
+      setNewTitle(board.title);
+    }
+  }, [board, id, dispatch, navigate, status]);
+
+  const handleDropColumn = (sourceIndex, destinationIndex) => {
+    if (sourceIndex !== destinationIndex) {
+      dispatch(reorderColumn({ boardId: Number(id), sourceIndex, destinationIndex }));
+    }
+  };
+
+  if (status === 'loading' || !board) {
+    return <p>Загрузка...</p>;
+  }
 
   const startEditing = () => {
     setNewTitle(board.title);
@@ -68,9 +92,17 @@ const BoardPage = () => {
       </div>
       <div className="columns-container">
         <div className="columns">
-          {board.columns.map(column => (
-            <Column key={column.id} column={column} boardId={board.id} moveTask={moveTask} />
-          ))}
+          {Array.isArray(board.columns) &&
+            board.columns.map((column, index) => (
+              <Column
+                key={column.id}
+                column={column}
+                boardId={board.id}
+                moveTask={moveTask}
+                index={index}
+                onDropColumn={handleDropColumn}
+              />
+            ))}
         </div>
       </div>
     </DndProvider>

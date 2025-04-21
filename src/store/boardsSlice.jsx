@@ -3,37 +3,45 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 export const fetchBoards = createAsyncThunk('boards/fetchBoards', async (_, { getState }) => {
   const { user } = getState().boards;
   if (!user) throw new Error('User not authenticated');
-  
   const res = await fetch(`http://localhost:8080/boards?userId=${user.id}`, {
     headers: {
-      'Authorization': `Bearer ${user.accessToken}`
+      'Content-Type': 'application/json'
     }
   });
-  
   if (!res.ok) throw new Error('Failed to fetch boards');
-  return res.json();
+  const boards = await res.json();
+  return boards.map(board => ({
+    ...board,
+    columns: Array.isArray(board.columns)
+      ? board.columns.map(column => ({
+          ...column,
+          tasks: Array.isArray(column.tasks) ? column.tasks.filter(task => task && task.id) : []
+        }))
+      : []
+  }));
 });
 
 export const addBoard = createAsyncThunk('boards/addBoard', async (title, { getState }) => {
   const { user } = getState().boards;
-  const newBoard = { 
-    id: Date.now(), 
-    title, 
-    columns: [], 
-    userId: user.id 
+  const newBoard = {
+    id: Date.now(),
+    title,
+    columns: [],
+    userId: user.id
   };
-  
   const res = await fetch('http://localhost:8080/boards', {
     method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${user.accessToken}`
+    headers: {
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify(newBoard),
   });
-  
   if (!res.ok) throw new Error('Failed to create board');
-  return newBoard;
+  const createdBoard = await res.json();
+  return {
+    ...createdBoard,
+    columns: Array.isArray(createdBoard.columns) ? createdBoard.columns : []
+  };
 });
 export const deleteBoard = createAsyncThunk('boards/deleteBoard', async (id, { getState }) => {
   const { user } = getState().boards;
@@ -50,21 +58,22 @@ export const addColumn = createAsyncThunk('boards/addColumn', async ({ boardId, 
   const { user } = getState().boards;
   const res = await fetch(`http://localhost:8080/boards/${boardId}`, {
     headers: {
-      'Authorization': `Bearer ${user.accessToken}`
+      'Content-Type': 'application/json'
     }
   });
+  if (!res.ok) throw new Error('Failed to fetch board');
   const board = await res.json();
-  if (board.columns.length >= 6) throw new Error('Max columns reached');
+  if ((board.columns || []).length >= 6) throw new Error('Max columns reached');
   const newColumn = { id: Date.now(), title: columnTitle, tasks: [] };
-  const updatedBoard = { ...board, columns: [...board.columns, newColumn] };
-  await fetch(`http://localhost:8080/boards/${boardId}`, {
+  const updatedBoard = { ...board, columns: [...(board.columns || []), newColumn] };
+  const updateRes = await fetch(`http://localhost:8080/boards/${boardId}`, {
     method: 'PUT',
-    headers: { 
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${user.accessToken}`
+    headers: {
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify(updatedBoard),
   });
+  if (!updateRes.ok) throw new Error('Failed to update board');
   return { boardId, newColumn };
 });
 
@@ -114,24 +123,25 @@ export const addTask = createAsyncThunk('boards/addTask', async ({ boardId, colu
   const { user } = getState().boards;
   const res = await fetch(`http://localhost:8080/boards/${boardId}`, {
     headers: {
-      'Authorization': `Bearer ${user.accessToken}`
+      'Content-Type': 'application/json'
     }
   });
+  if (!res.ok) throw new Error('Failed to fetch board');
   const board = await res.json();
-  const updatedColumns = board.columns.map(col =>
+  const updatedColumns = (board.columns || []).map(col =>
     col.id === columnId
-      ? { ...col, tasks: [...col.tasks, { id: Date.now(), title: taskTitle, completed: false }] }
+      ? { ...col, tasks: [...(Array.isArray(col.tasks) ? col.tasks : []), { id: Date.now(), title: taskTitle, completed: false }] }
       : col
   );
   const updatedBoard = { ...board, columns: updatedColumns };
-  await fetch(`http://localhost:8080/boards/${boardId}`, {
+  const updateRes = await fetch(`http://localhost:8080/boards/${boardId}`, {
     method: 'PUT',
-    headers: { 
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${user.accessToken}`
+    headers: {
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify(updatedBoard),
   });
+  if (!updateRes.ok) throw new Error('Failed to update board');
   return { boardId, columnId, task: { id: Date.now(), title: taskTitle, completed: false } };
 });
 
@@ -187,28 +197,30 @@ export const moveTask = createAsyncThunk('boards/moveTask', async ({ boardId, ta
   const { user } = getState().boards;
   const res = await fetch(`http://localhost:8080/boards/${boardId}`, {
     headers: {
-      'Authorization': `Bearer ${user.accessToken}`
+      'Content-Type': 'application/json'
     }
   });
+  if (!res.ok) throw new Error('Failed to fetch board');
   const board = await res.json();
-  const sourceColumn = board.columns.find(col => col.id === sourceColumnId);
-  const task = sourceColumn.tasks.find(t => t.id === taskId);
-  const updatedColumns = board.columns.map(col => {
-    if (col.id === sourceColumnId) return { ...col, tasks: col.tasks.filter(t => t.id !== taskId) };
-    if (col.id === newColumnId) return { ...col, tasks: [...col.tasks, task] };
+  const sourceColumn = (board.columns || []).find(col => col.id === sourceColumnId);
+  const task = (sourceColumn.tasks || []).find(t => t.id === taskId);
+  if (!task) throw new Error('Task not found');
+  const updatedColumns = (board.columns || []).map(col => {
+    if (col.id === sourceColumnId) return { ...col, tasks: (col.tasks || []).filter(t => t.id !== taskId) };
+    if (col.id === newColumnId) return { ...col, tasks: [...(Array.isArray(col.tasks) ? col.tasks : []), task] };
     return col;
   });
   const updatedBoard = { ...board, columns: updatedColumns };
-  await fetch(`http://localhost:8080/boards/${boardId}`, {
+  const updateRes = await fetch(`http://localhost:8080/boards/${boardId}`, {
     method: 'PUT',
-    headers: { 
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${user.accessToken}`
+    headers: {
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify(updatedBoard),
   });
+  if (!updateRes.ok) throw new Error('Failed to update board');
   return { boardId, taskId, sourceColumnId, newColumnId };
-});
+})
 
 export const editBoardTitle = createAsyncThunk('boards/editBoardTitle', async ({ boardId, newTitle }, { getState }) => {
   const { user } = getState().boards;
@@ -256,6 +268,30 @@ export const toggleTaskCompletion = createAsyncThunk('boards/toggleTaskCompletio
     body: JSON.stringify(updatedBoard),
   });
   return { boardId, columnId, taskId };
+});
+
+export const reorderColumn = createAsyncThunk('boards/reorderColumn', async ({ boardId, sourceIndex, destinationIndex }, { getState }) => {
+  const { user } = getState().boards;
+  const res = await fetch(`http://localhost:8080/boards/${boardId}`, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+  if (!res.ok) throw new Error('Failed to fetch board');
+  const board = await res.json();
+  const columns = [...(Array.isArray(board.columns) ? board.columns : [])];
+  const [movedColumn] = columns.splice(sourceIndex, 1);
+  columns.splice(destinationIndex, 0, movedColumn);
+  const updatedBoard = { ...board, columns };
+  const updateRes = await fetch(`http://localhost:8080/boards/${boardId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(updatedBoard),
+  });
+  if (!updateRes.ok) throw new Error('Failed to update board');
+  return { boardId, columns };
 });
 
 const boardsSlice = createSlice({
@@ -363,6 +399,13 @@ const boardsSlice = createSlice({
         const { boardId, newTitle } = action.payload;
         const board = state.boards.find(b => b.id === boardId);
         if (board) board.title = newTitle;
+      })
+      .addCase(reorderColumn.fulfilled, (state, action) => {
+        const { boardId, columns } = action.payload;
+        const board = state.boards.find(b => b.id === boardId);
+        if (board) {
+          board.columns = columns;
+        }
       })
       .addCase(toggleTaskCompletion.fulfilled, (state, action) => {
         const { boardId, columnId, taskId } = action.payload;

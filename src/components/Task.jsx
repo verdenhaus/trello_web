@@ -11,7 +11,7 @@ const Task = ({ task, columnId, boardId }) => {
 
   const [{ isDragging }, drag] = useDrag({
     type: 'TASK',
-    item: { id: task.id, columnId, boardId },
+    item: { id: task.id, columnId, boardId, type: 'TASK' },
     collect: monitor => ({
       isDragging: !!monitor.isDragging(),
     }),
