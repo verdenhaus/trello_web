@@ -1,4 +1,4 @@
-import './Register.css'
+import styles from './Register.module.css';
 import { FaRegAddressCard } from "react-icons/fa";
 import { FiUser } from "react-icons/fi";
 import { TbLockAccess } from "react-icons/tb";
@@ -53,23 +53,23 @@ function Register() {
     }   
 
     return (
-        <div className='reg-cont'>
-            <div className='register'>
-                <div className="register-icon">
+        <div className={styles['reg-cont']}>
+            <div className={styles.register}>
+                <div className={styles['register-icon']}>
                     <h1>Registration</h1>
                 </div>
-                <div className='register-form'>
-                    <div className='reg-form-div'>
+                <div className={styles['register-form']}>
+                    <div className={styles['reg-form-div']}>
                         <FiUser />
                         <input type="text" placeholder='email...' onChange={(e)=>setData({...data, email: e.target.value})}/>
                     </div>
-                    <div className='reg-form-div'>
+                    <div className={styles['reg-form-div']}>
                         <TbLockAccess />
                         <input type={eye === true ? "password" : "text" }  placeholder='password...' onChange={(e)=>setData({...data, password: e.target.value})} />
                         <button onClick={eyeChange}>{eye === true ? <FaRegEye /> : <FaRegEyeSlash /> }</button>
                     </div>
                 </div>
-                <div className="reg-button">
+                <div className={styles['reg-button']}>
                     <button onClick={handleCreateUser}>Register</button>
                     <button onClick={()=>navigate('/login')}>Login</button>
                 </div>

@@ -7,6 +7,7 @@ import { FaRegEyeSlash } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../../store/boardsSlice';
+import styles from './Login.module.css';
 
 function Login() {
 
@@ -63,26 +64,26 @@ function Login() {
     }   
 
     return (
-        <div className='reg-cont'>
-            <div className='register'>
-                <div className="register-icon">
+        <div className={styles['reg-cont']}>
+            <div className={styles.register}>
+                <div className={styles['register-icon']}>
                     <h1>Login</h1>
                 </div>
-                <div className='register-form'>
-                    <div className='reg-form-div'>
+                <div className={styles['register-form']}>
+                    <div className={styles['reg-form-div']}>
                         <FiUser />
                         <input type="text" placeholder='email...' onChange={(e)=>setData({...data, email: e.target.value})}/>
                     </div>
-                    <div className='reg-form-div'>
+                    <div className={styles['reg-form-div']}>
                         <TbLockAccess />
                         <input type={eye === true ? "password" : "text" }  placeholder='password...' onChange={(e)=>setData({...data, password: e.target.value})} />
                         <button onClick={eyeChange}>{eye === true ? <FaRegEye /> : <FaRegEyeSlash /> }</button>
                     </div>
                     {
-                        error && <p className="error">{error}</p>
+                        error && <p className={styles.error}>{error}</p>
                     }
                 </div>
-                <div className="reg-button">
+                <div className={styles['reg-button']}>
                     <button onClick={handleLogUser}>Login</button>
                     <button onClick={()=>navigate('/register')}>Registration</button>
                 </div>

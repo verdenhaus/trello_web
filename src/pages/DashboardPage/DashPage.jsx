@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchBoards, addBoard, deleteBoard } from '../../store/boardsSlice';
+import styles from './DashPage.module.css';
 
 const DashboardPage = () => {
   const dispatch = useDispatch();
@@ -32,11 +33,11 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="dashboard">
+    <div className={styles.dashboard}>
       <h1>Мои доски</h1>
-      <div className="board-list">
+      <div className={styles["board-list"]}>
         {boards.map(board => (
-          <div key={board.id} className="board-card">
+          <div key={board.id} className={styles["board-card"]}>
             <h3 onClick={() => navigate(`/board/${board.id}`)}>{board.title}</h3>
             <button onClick={() => dispatch(deleteBoard(board.id))}>Удалить</button>
           </div>
@@ -44,18 +45,18 @@ const DashboardPage = () => {
       </div>
 
       {!showForm ? (
-        <div className="new-board">
+        <div className={styles["new-board"]}>
           <button onClick={() => setShowForm(true)}>Создать доску</button>
         </div>
       ) : (
-        <div className="new-board">
+        <div className={styles["new-board"]}>
           <input
             type="text"
             placeholder="Название доски"
             value={boardTitle}
             onChange={e => setBoardTitle(e.target.value)}
           />
-          <div className="buttons">
+          <div className={styles.buttons}>
             <button onClick={() => setShowForm(false)}>Отмена</button>
             <button onClick={handleCreateBoard}>Создать</button>
           </div>
